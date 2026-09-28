@@ -3,6 +3,7 @@
 ## Notes: Small XP bars beside Blizzard party frames for party members using Party XP.
 ## Author: Sander
 ## Version: @project-version@
+## X-Curse-Project-ID: 1716005
 ## SavedVariables: PartyXPDB
 ## Category: Unit Frames
 
