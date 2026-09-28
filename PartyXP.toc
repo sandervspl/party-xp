@@ -1,0 +1,15 @@
+## Interface: 120100, 50504, 38002, 20506, 11509, 16001
+## Title: Party XP
+## Notes: Small XP bars beside Blizzard party frames for party members using Party XP.
+## Author: Sander
+## Version: @project-version@
+## SavedVariables: PartyXPDB
+## Category: Unit Frames
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
+
+PartyXP.lua
+Options.lua

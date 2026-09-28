@@ -1,0 +1,7 @@
+ignore:
+  - .busted
+  - .github
+  - Tests
+  - scripts
+  - artifacts
+  - README.md

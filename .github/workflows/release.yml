@@ -1,0 +1,33 @@
+name: Package and publish addon
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Package and release Retail
+        uses: BigWigsMods/packager@v2
+      - name: Package and release Classic Era
+        uses: BigWigsMods/packager@v2
+        with:
+          args: -g classic
+      - name: Package and release Mists of Pandaria
+        uses: BigWigsMods/packager@v2
+        with:
+          args: -g mists
+      - name: Package and release Forever
+        uses: BigWigsMods/packager@v2
+        with:
+          args: -g forever

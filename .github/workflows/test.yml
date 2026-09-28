@@ -1,0 +1,26 @@
+name: Test addon
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua and Busted
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes lua5.1 lua-busted
+      - name: Run party flow test
+        run: |
+          set -o pipefail
+          mkdir -p artifacts
+          busted --output=TAP | tee artifacts/party-xp-e2e.tap
+      - name: Upload test artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: party-xp-e2e
+          path: artifacts/party-xp-e2e.tap
