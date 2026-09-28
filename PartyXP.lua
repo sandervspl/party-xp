@@ -349,8 +349,25 @@ local function Receive(prefix, message, distribution, sender)
     addon:RefreshBars()
 end
 
+local function ShowFirstLoginNotice()
+    if not addon.db or addon.db.introShown == true or not StaticPopupDialogs or not StaticPopup_Show then
+        return
+    end
+
+    StaticPopupDialogs.PARTYXP_FIRST_LOGIN_NOTICE = {
+        text = "Party XP only shows another party member's XP bar when they also have Party XP installed. Ask your party members to install the addon to share their XP progress.",
+        button1 = OKAY,
+        timeout = 0,
+        whileDead = true,
+    }
+    if StaticPopup_Show("PARTYXP_FIRST_LOGIN_NOTICE") then
+        addon.db.introShown = true
+    end
+end
+
 local events = CreateFrame("Frame")
 events:RegisterEvent("ADDON_LOADED")
+events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
 events:RegisterEvent("GROUP_ROSTER_UPDATE")
 events:RegisterEvent("PLAYER_XP_UPDATE")
@@ -368,6 +385,8 @@ events:SetScript("OnEvent", function(_, event, ...)
             RegisterAddonMessagePrefix(PREFIX)
         end
         addon:RefreshBars()
+    elseif event == "PLAYER_LOGIN" then
+        ShowFirstLoginNotice()
     elseif event == "CHAT_MSG_ADDON" then
         Receive(...)
     elseif event == "UNIT_LEVEL" then

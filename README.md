@@ -2,6 +2,8 @@
 
 Party XP adds small experience bars beside Blizzard party member frames. A party member must also have Party XP installed for their XP to appear: World of Warcraft exposes your own XP to addons, and Party XP shares it with your party through addon messages. Bars disappear for max-level members, missing data, raids, and when disabled.
 
+On your first login with Party XP, a one-time popup explains that other party members need the addon for their XP bars to appear.
+
 The addon supports Blizzard's standard and raid-style party frames. It does not attach to third-party unit frames.
 
 ## Settings
