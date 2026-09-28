@@ -90,6 +90,13 @@ local function FindUnitFrame(index)
 end
 
 local function UnitFullNameSafe(unit)
+    if RegionalUniqueNamesEnabled and RegionalUniqueNamesEnabled()
+        and NameUtil and NameUtil.GetUnmodifiedUnitFullName then
+        local fullName = NameUtil.GetUnmodifiedUnitFullName(unit)
+        if IsSecret(fullName) then return nil end
+        return fullName
+    end
+
     local name, realm
     if UnitFullName then
         name, realm = UnitFullName(unit)
@@ -106,6 +113,7 @@ local function SenderMatchesUnit(sender, unit)
     local fullName = UnitFullNameSafe(unit)
     if not fullName then return false end
     if sender == fullName then return true end
+    if RegionalUniqueNamesEnabled and RegionalUniqueNamesEnabled() then return false end
     -- Same-realm addon senders may omit the realm suffix.
     local shortName, realm = fullName:match("^([^-]+)%-?(.*)$")
     if sender:find("-", 1, true) or sender ~= shortName then return false end

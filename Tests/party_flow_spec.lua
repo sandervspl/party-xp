@@ -94,6 +94,8 @@ describe("Party XP party flow", function()
         _G.IsInGroup = function(category) return party and (not category or instance) end
         _G.IsInRaid = function() return raid end
         _G.issecretvalue = function() return false end
+        _G.RegionalUniqueNamesEnabled = function() return false end
+        _G.NameUtil = nil
         _G.C_ChatInfo = {
             RegisterAddonMessagePrefix = function(prefix) assert.are.equal("PartyXP", prefix) end,
             SendAddonMessage = function(prefix, message, channel)
@@ -207,5 +209,33 @@ describe("Party XP party flow", function()
         fire("PLAYER_XP_UPDATE")
         advance(1)
         assert.are.same({ "PartyXP", "1:25:800:1000", "INSTANCE_CHAT" }, sent[#sent])
+    end)
+
+    it("matches Forever party members by full first name and surname", function()
+        members.party1.surname = "Brightvale"
+        members.party3.name = "Alice"
+        members.party3.surname = "Stone"
+        _G.RegionalUniqueNamesEnabled = function() return true end
+        _G.NameUtil = {
+            GetUnmodifiedUnitFullName = function(unit)
+                local member = members[unit]
+                if not member then return nil end
+                return member.surname and (member.name .. " " .. member.surname) or member.name
+            end,
+        }
+
+        fire("CHAT_MSG_ADDON", "PartyXP", "1:20:350:1000", "PARTY", "Alice")
+        fire("CHAT_MSG_ADDON", "PartyXP", "1:20:350:1000", "PARTY", "Alice-Brightvale")
+        assert.is_false(addon.bars[1].shown)
+        assert.is_false(addon.bars[3].shown)
+
+        fire("CHAT_MSG_ADDON", "PartyXP", "1:20:350:1000", "PARTY", "Alice Brightvale")
+        fire("CHAT_MSG_ADDON", "PartyXP", "1:30:700:1200", "PARTY", "Alice Stone")
+        assert.is_true(addon.bars[1].shown)
+        assert.are.equal(350, addon.bars[1].value)
+        assert.is_true(addon.bars[3].shown)
+        assert.are.equal(700, addon.bars[3].value)
+        assert.are.equal(frames.standard1, addon.bars[1].point[2])
+        assert.are.equal(frames.standard3, addon.bars[3].point[2])
     end)
 end)
