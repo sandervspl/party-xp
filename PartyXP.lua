@@ -7,7 +7,26 @@ local MAX_PARTY_MEMBERS = 4
 local STALE_SECONDS = 90
 local BROADCAST_SECONDS = 30
 local REFRESH_SECONDS = 0.25
-local TEXTURE = "Interface\\TargetingFrame\\UI-StatusBar"
+local MEDIA = "Interface\\AddOns\\PartyXP\\Media\\"
+local FILL_TEXTURES = {
+    CLASSIC = "Interface\\TargetingFrame\\UI-StatusBar",
+    FLAT = MEDIA .. "Flat.tga",
+    GLOSS = MEDIA .. "Gloss.tga",
+    STRIPED = MEDIA .. "Striped.tga",
+}
+local BORDER_STYLES = {
+    THIN = { size = 1, r = 0.12, g = 0.12, b = 0.15, a = 0.9 },
+    BOLD = { size = 2, r = 0, g = 0, b = 0, a = 1 },
+    GOLD = { size = 2, r = 0.9, g = 0.7, b = 0.3, a = 1 },
+}
+local MASK_TEXTURES = {
+    [1] = MEDIA .. "Rounded-1.tga",
+    [2] = MEDIA .. "Rounded-2.tga",
+    [4] = MEDIA .. "Rounded-4.tga",
+    [8] = MEDIA .. "Rounded-8.tga",
+    [16] = MEDIA .. "Rounded-16.tga",
+    [32] = MEDIA .. "Rounded-32.tga",
+}
 
 local defaults = {
     enabled = true,
@@ -18,6 +37,10 @@ local defaults = {
     offsetY = 0,
     opacity = 1,
     color = { r = 0.45, g = 0.28, b = 0.95 },
+    fillStyle = "CLASSIC",
+    borderEnabled = false,
+    borderStyle = "THIN",
+    rounded = false,
 }
 
 local sides = { LEFT = true, RIGHT = true, TOP = true, BOTTOM = true }
@@ -55,6 +78,10 @@ local function LoadSettings()
     db.color.r = Clamp(db.color.r, 0, 1, defaults.color.r)
     db.color.g = Clamp(db.color.g, 0, 1, defaults.color.g)
     db.color.b = Clamp(db.color.b, 0, 1, defaults.color.b)
+    if not FILL_TEXTURES[db.fillStyle] then db.fillStyle = defaults.fillStyle end
+    if type(db.borderEnabled) ~= "boolean" then db.borderEnabled = defaults.borderEnabled end
+    if not BORDER_STYLES[db.borderStyle] then db.borderStyle = defaults.borderStyle end
+    if type(db.rounded) ~= "boolean" then db.rounded = defaults.rounded end
     addon.db = db
 end
 
@@ -130,20 +157,109 @@ local function FindSenderUnit(sender)
     end
 end
 
+local function MaskAspect(width, height)
+    local ratio = width / height
+    if ratio < 1.5 then return 1 end
+    if ratio < 3 then return 2 end
+    if ratio < 6 then return 4 end
+    if ratio < 12 then return 8 end
+    if ratio < 24 then return 16 end
+    return 32
+end
+
+local function SetMaskTexture(mask, width, height, previousAspect)
+    local aspect = MaskAspect(width, height)
+    if aspect ~= previousAspect then mask:SetTexture(MASK_TEXTURES[aspect]) end
+    return aspect
+end
+
 local function CreateBar(index)
-    local bar = CreateFrame("StatusBar", "PartyXPBar" .. index, UIParent)
-    bar:SetStatusBarTexture(TEXTURE)
-    bar:SetMinMaxValues(0, 1)
-    bar:SetValue(0)
+    local bar = CreateFrame("Frame", "PartyXPBar" .. index, UIParent)
     bar:SetFrameStrata("MEDIUM")
     bar:EnableMouse(false)
-    local background = bar:CreateTexture(nil, "BACKGROUND")
-    background:SetAllPoints(bar)
+
+    local borderSurface = bar:CreateTexture(nil, "BACKGROUND")
+    borderSurface:SetAllPoints(bar)
+    borderSurface:Hide()
+    bar.borderSurface = borderSurface
+
+    local fill = CreateFrame("StatusBar", nil, bar)
+    fill:SetAllPoints(bar)
+    fill:SetStatusBarTexture(FILL_TEXTURES.CLASSIC)
+    fill:SetMinMaxValues(0, 1)
+    fill:SetValue(0)
+    bar.fill = fill
+    bar.fillTexture = fill:GetStatusBarTexture()
+    bar.fillStyle = "CLASSIC"
+    bar.borderInset = 0
+    bar.rounded = false
+
+    local background = fill:CreateTexture(nil, "BACKGROUND")
+    background:SetAllPoints(fill)
     background:SetColorTexture(0, 0, 0, 0.75)
     bar.background = background
+
+    bar.outerMask = bar:CreateMaskTexture()
+    bar.outerMask:SetAllPoints(bar)
+    bar.backgroundMask = fill:CreateMaskTexture()
+    bar.backgroundMask:SetAllPoints(fill)
+    bar.fillMask = fill:CreateMaskTexture()
+    bar.fillMask:SetPoint("LEFT", fill, "LEFT", 0, 0)
+    bar.fillMask:SetSize(1, 1)
+
     bar:Hide()
     bars[index] = bar
     return bar
+end
+
+local function ApplyAppearance(bar, db, progress)
+    if bar.fillStyle ~= db.fillStyle then
+        if bar.rounded then bar.fillTexture:RemoveMaskTexture(bar.fillMask) end
+        bar.fill:SetStatusBarTexture(FILL_TEXTURES[db.fillStyle])
+        bar.fillTexture = bar.fill:GetStatusBarTexture()
+        if bar.rounded then bar.fillTexture:AddMaskTexture(bar.fillMask) end
+        bar.fillStyle = db.fillStyle
+    end
+
+    local borderStyle = BORDER_STYLES[db.borderStyle]
+    if bar.borderStyle ~= db.borderStyle then
+        bar.borderSurface:SetColorTexture(borderStyle.r, borderStyle.g, borderStyle.b, borderStyle.a)
+        bar.borderStyle = db.borderStyle
+    end
+    if bar.borderEnabled ~= db.borderEnabled then
+        if db.borderEnabled then bar.borderSurface:Show() else bar.borderSurface:Hide() end
+        bar.borderEnabled = db.borderEnabled
+    end
+
+    local inset = db.borderEnabled and math.min(borderStyle.size, math.floor((db.height - 1) / 2)) or 0
+    if bar.borderInset ~= inset then
+        bar.fill:ClearAllPoints()
+        bar.fill:SetPoint("TOPLEFT", bar, "TOPLEFT", inset, -inset)
+        bar.fill:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -inset, inset)
+        bar.borderInset = inset
+    end
+
+    if bar.rounded ~= db.rounded then
+        if db.rounded then
+            bar.borderSurface:AddMaskTexture(bar.outerMask)
+            bar.background:AddMaskTexture(bar.backgroundMask)
+            bar.fillTexture:AddMaskTexture(bar.fillMask)
+        else
+            bar.borderSurface:RemoveMaskTexture(bar.outerMask)
+            bar.background:RemoveMaskTexture(bar.backgroundMask)
+            bar.fillTexture:RemoveMaskTexture(bar.fillMask)
+        end
+        bar.rounded = db.rounded
+    end
+
+    if db.rounded then
+        local innerWidth = db.width - 2 * inset
+        local innerHeight = db.height - 2 * inset
+        bar.fillMask:SetSize(math.max(innerWidth * progress, 0.01), innerHeight)
+        bar.outerMaskAspect = SetMaskTexture(bar.outerMask, db.width, db.height, bar.outerMaskAspect)
+        bar.backgroundMaskAspect = SetMaskTexture(bar.backgroundMask, innerWidth, innerHeight, bar.backgroundMaskAspect)
+        bar.fillMaskAspect = SetMaskTexture(bar.fillMask, innerWidth * progress, innerHeight, bar.fillMaskAspect)
+    end
 end
 
 local function PositionBar(bar, frame)
@@ -182,10 +298,11 @@ function addon:RefreshBars()
                 if state and clock - state.seen <= STALE_SECONDS and state.level == level then
                     PositionBar(bar, frame)
                     bar:SetSize(db.width, db.height)
+                    ApplyAppearance(bar, db, state.xp / state.maxXP)
                     bar:SetAlpha(db.opacity)
-                    bar:SetStatusBarColor(db.color.r, db.color.g, db.color.b)
-                    bar:SetMinMaxValues(0, state.maxXP)
-                    bar:SetValue(state.xp)
+                    bar.fill:SetStatusBarColor(db.color.r, db.color.g, db.color.b)
+                    bar.fill:SetMinMaxValues(0, state.maxXP)
+                    bar.fill:SetValue(state.xp)
                     visible = true
                 end
             end

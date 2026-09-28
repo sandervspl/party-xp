@@ -103,10 +103,23 @@ local options = {
             inline = true,
             order = 5,
             args = {
+                fillStyle = {
+                    type = "select",
+                    name = "Fill style",
+                    order = 1,
+                    width = "double",
+                    values = {
+                        CLASSIC = "Classic",
+                        FLAT = "Flat",
+                        GLOSS = "Gloss",
+                        STRIPED = "Striped",
+                    },
+                    sorting = { "CLASSIC", "FLAT", "GLOSS", "STRIPED" },
+                },
                 opacity = {
                     type = "range",
                     name = "Opacity",
-                    order = 1,
+                    order = 2,
                     width = "double",
                     min = 0.1, max = 1, step = 0.05,
                     isPercent = true,
@@ -114,7 +127,7 @@ local options = {
                 color = {
                     type = "color",
                     name = "Bar color",
-                    order = 2,
+                    order = 3,
                     width = "double",
                     hasAlpha = false,
                     get = function()
@@ -126,6 +139,27 @@ local options = {
                         color.r, color.g, color.b = r, g, b
                         addon:RefreshBars()
                     end,
+                },
+                borderEnabled = {
+                    type = "toggle",
+                    name = "Show border",
+                    order = 4,
+                    width = "double",
+                },
+                borderStyle = {
+                    type = "select",
+                    name = "Border style",
+                    order = 5,
+                    width = "double",
+                    values = { THIN = "Thin", BOLD = "Bold", GOLD = "Gold" },
+                    sorting = { "THIN", "BOLD", "GOLD" },
+                    disabled = function() return not addon.db.borderEnabled end,
+                },
+                rounded = {
+                    type = "toggle",
+                    name = "Rounded edges",
+                    order = 6,
+                    width = "double",
                 },
             },
         },

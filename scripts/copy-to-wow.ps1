@@ -10,7 +10,7 @@ $ErrorActionPreference = "Stop"
 
 $addonName = "PartyXP"
 $sourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
-$sourceDirectories = @("Libs")
+$sourceDirectories = @("Libs", "Media")
 $sourceFiles = @(
     "PartyXP.lua",
     "PartyXP.toc",

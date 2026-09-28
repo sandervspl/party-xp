@@ -7,11 +7,13 @@ describe("Party XP party flow", function()
         function frame:RegisterEvent(event) self.events[event] = true end
         function frame:SetScript(script, callback) self.scripts[script] = callback end
         function frame:CreateTexture() return widget("Texture") end
+        function frame:CreateMaskTexture() return widget("MaskTexture") end
         function frame:CreateFontString() return widget("FontString") end
         function frame:IsShown() return self.shown end
         function frame:Show() self.shown = true end
         function frame:Hide() self.shown = false end
         function frame:SetPoint(...) self.point = { ... } end
+        function frame:SetAllPoints(target) self.allPoints = target end
         function frame:ClearAllPoints() self.point = nil end
         function frame:SetSize(width, height) self.width, self.height = width, height end
         function frame:SetMinMaxValues(minimum, maximum) self.minimum, self.maximum = minimum, maximum end
@@ -20,12 +22,25 @@ describe("Party XP party flow", function()
             if self.scripts.OnValueChanged then self.scripts.OnValueChanged(self, value) end
         end
         function frame:SetStatusBarColor(r, g, b) self.color = { r, g, b } end
+        function frame:SetStatusBarTexture(path)
+            self.statusBarTexture = rawget(self, "statusBarTexture") or widget("Texture")
+            self.statusBarTexture.texture = path
+        end
+        function frame:GetStatusBarTexture() return self.statusBarTexture end
+        function frame:SetTexture(path) self.texture = path end
+        function frame:AddMaskTexture(mask)
+            self.masks = rawget(self, "masks") or {}
+            self.masks[mask] = true
+        end
+        function frame:RemoveMaskTexture(mask)
+            local masks = rawget(self, "masks")
+            if masks then masks[mask] = nil end
+        end
         function frame:SetAlpha(alpha) self.alpha = alpha end
         function frame:SetText(text) self.text = text end
         function frame:SetChecked(value) self.checked = value end
         function frame:GetChecked() return self.checked end
         function frame:SetColorTexture(r, g, b, a) self.color = { r, g, b, a } end
-        function frame:SetMinMaxValues(minimum, maximum) self.minimum, self.maximum = minimum, maximum end
         setmetatable(frame, { __index = function() return function() end end })
         widgets[#widgets + 1] = frame
         if name then frames[name] = frame end
@@ -133,8 +148,8 @@ describe("Party XP party flow", function()
         fire("CHAT_MSG_ADDON", "PartyXP", "1:20:350:1000", "PARTY", "Alice-Realm")
         fire("CHAT_MSG_ADDON", "PartyXP", "1:80:500:1000", "PARTY", "Bob-Realm")
         assert.is_true(addon.bars[1].shown)
-        assert.are.equal(350, addon.bars[1].value)
-        assert.are.equal(1000, addon.bars[1].maximum)
+        assert.are.equal(350, addon.bars[1].fill.value)
+        assert.are.equal(1000, addon.bars[1].fill.maximum)
         assert.is_false(addon.bars[2].shown)
         assert.is_false(addon.bars[3].shown)
 
@@ -153,9 +168,9 @@ describe("Party XP party flow", function()
         assert.are.equal(CompactPartyFrame.memberUnitFrames[3], addon.bars[1].point[2])
 
         fire("CHAT_MSG_ADDON", "PartyXP", "1:20:700:1000", "PARTY", "Alice-Realm")
-        assert.are.equal(700, addon.bars[1].value)
+        assert.are.equal(700, addon.bars[1].fill.value)
         fire("CHAT_MSG_ADDON", "PartyXP", "1:20:1000000001:1000000002", "PARTY", "Alice-Realm")
-        assert.are.equal(700, addon.bars[1].value)
+        assert.are.equal(700, addon.bars[1].fill.value)
 
         -- A leveling party member reaching the cap loses their bar immediately.
         members.party1.level = 80
@@ -180,6 +195,9 @@ describe("Party XP party flow", function()
         assert.are.equal("select", optionsTable.args.position.args.side.type)
         assert.are.equal("range", optionsTable.args.size.args.width.type)
         assert.are.equal("color", optionsTable.args.appearance.args.color.type)
+        assert.are.equal("select", optionsTable.args.appearance.args.fillStyle.type)
+        assert.are.equal("select", optionsTable.args.appearance.args.borderStyle.type)
+        assert.are.equal("toggle", optionsTable.args.appearance.args.rounded.type)
 
         optionsTable.set({ "size", "width" }, 122)
         optionsTable.set({ "position", "side" }, "LEFT")
@@ -187,9 +205,37 @@ describe("Party XP party flow", function()
         assert.are.equal(122, PartyXPDB.width)
         assert.are.equal("LEFT", PartyXPDB.side)
         assert.are.equal("RIGHT", addon.bars[1].point[1])
-        assert.are.same({ 0.2, 0.6, 0.8 }, addon.bars[1].color)
+        assert.are.same({ 0.2, 0.6, 0.8 }, addon.bars[1].fill.color)
         assert.are.equal(122, optionsTable.get({ "size", "width" }))
         assert.are.same({ 0.2, 0.6, 0.8 }, { optionsTable.args.appearance.args.color.get() })
+
+        local bar = addon.bars[1]
+        assert.is_true(optionsTable.args.appearance.args.borderStyle.disabled())
+        optionsTable.set({ "appearance", "fillStyle" }, "STRIPED")
+        optionsTable.set({ "appearance", "borderEnabled" }, true)
+        optionsTable.set({ "appearance", "borderStyle" }, "GOLD")
+        optionsTable.set({ "appearance", "rounded" }, true)
+        assert.are.equal("Interface\\AddOns\\PartyXP\\Media\\Striped.tga", bar.fillTexture.texture)
+        assert.is_false(optionsTable.args.appearance.args.borderStyle.disabled())
+        assert.is_true(bar.borderSurface.shown)
+        assert.are.same({ 0.9, 0.7, 0.3, 1 }, bar.borderSurface.color)
+        assert.are.equal(2, bar.borderInset)
+        assert.is_true(bar.borderSurface.masks[bar.outerMask])
+        assert.is_true(bar.background.masks[bar.backgroundMask])
+        assert.is_true(bar.fillTexture.masks[bar.fillMask])
+        assert.are.equal("Interface\\AddOns\\PartyXP\\Media\\Rounded-16.tga", bar.fillMask.texture)
+        assert.are.near(82.6, bar.fillMask.width, 0.001)
+        assert.are.equal(4, bar.fillMask.height)
+
+        -- Appearance remains attached to the same peer when its XP and frame change.
+        fire("CHAT_MSG_ADDON", "PartyXP", "1:20:100:1000", "PARTY", "Alice-Realm")
+        assert.are.equal("Interface\\AddOns\\PartyXP\\Media\\Rounded-2.tga", bar.fillMask.texture)
+        assert.are.near(11.8, bar.fillMask.width, 0.001)
+        assert.are.equal(100, bar.fill.value)
+        optionsTable.set({ "appearance", "fillStyle" }, "GLOSS")
+        assert.are.equal("Interface\\AddOns\\PartyXP\\Media\\Gloss.tga", bar.fillTexture.texture)
+        assert.is_true(bar.fillTexture.masks[bar.fillMask])
+        assert.is_true(bar.shown)
 
         optionsTable.set({ "appearance", "opacity" }, 0.5)
         assert.are.equal(0.5, addon.bars[1].alpha)
@@ -198,7 +244,12 @@ describe("Party XP party flow", function()
         assert.are.equal("RIGHT", PartyXPDB.side)
         assert.are.equal(1, addon.bars[1].alpha)
         assert.are.equal("LEFT", addon.bars[1].point[1])
-        assert.are.same({ 0.45, 0.28, 0.95 }, addon.bars[1].color)
+        assert.are.same({ 0.45, 0.28, 0.95 }, addon.bars[1].fill.color)
+        assert.are.equal("CLASSIC", PartyXPDB.fillStyle)
+        assert.is_false(PartyXPDB.borderEnabled)
+        assert.is_false(PartyXPDB.rounded)
+        assert.is_false(bar.borderSurface.shown)
+        assert.is_nil(bar.fillTexture.masks[bar.fillMask])
         assert.are.equal("PartyXP", notifications[#notifications])
 
         -- Old messages must stop driving bars when a peer goes silent.
@@ -232,9 +283,9 @@ describe("Party XP party flow", function()
         fire("CHAT_MSG_ADDON", "PartyXP", "1:20:350:1000", "PARTY", "Alice Brightvale")
         fire("CHAT_MSG_ADDON", "PartyXP", "1:30:700:1200", "PARTY", "Alice Stone")
         assert.is_true(addon.bars[1].shown)
-        assert.are.equal(350, addon.bars[1].value)
+        assert.are.equal(350, addon.bars[1].fill.value)
         assert.is_true(addon.bars[3].shown)
-        assert.are.equal(700, addon.bars[3].value)
+        assert.are.equal(700, addon.bars[3].fill.value)
         assert.are.equal(frames.standard1, addon.bars[1].point[2])
         assert.are.equal(frames.standard3, addon.bars[3].point[2])
     end)

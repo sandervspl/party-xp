@@ -6,13 +6,13 @@ The addon supports Blizzard's standard and raid-style party frames. It does not 
 
 ## Settings
 
-Open Escape -> Options -> AddOns -> Party XP, or type `/partyxp` or `/pxp` to open the same settings panel. You can change bar width, height, position, offsets, opacity, and color. `/partyxp on` and `/partyxp off` toggle the bars. Settings are saved between sessions.
+Open Escape -> Options -> AddOns -> Party XP, or type `/partyxp` or `/pxp` to open the same settings panel. You can change bar width, height, position, offsets, opacity, and color. The Appearance section also offers Classic, Flat, Gloss, and Striped fills; optional Thin, Bold, or Gold borders; and rounded edges. `/partyxp on` and `/partyxp off` toggle the bars. Settings are saved between sessions.
 
 ## Local installation
 
 Run `./scripts/copy-to-wow.ps1` in PowerShell to copy the addon to installed WoW clients. Pass `-WowRoot "D:\World of Warcraft"` if automatic discovery misses your installation. Use `-WhatIf` to preview destinations.
 
-The included Ace3 configuration libraries are copied with the addon. They come from [WoWUIDev/Ace3](https://github.com/WoWUIDev/Ace3) at commit `a3604956e6e98a2b41144e7dbffadb21b917f828`; their license is in `Libs/LICENSE-Ace3.txt`.
+The included Ace3 configuration libraries and bar textures are copied with the addon. The Ace3 libraries come from [WoWUIDev/Ace3](https://github.com/WoWUIDev/Ace3) at commit `a3604956e6e98a2b41144e7dbffadb21b917f828`; their license is in `Libs/LICENSE-Ace3.txt`. To rebuild the bar textures, run `python scripts/build-media.py`.
 
 ## Development
 
