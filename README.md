@@ -14,7 +14,7 @@ Open Escape -> Options -> AddOns -> Party XP, or type `/partyxp` or `/pxp` to op
 
 Run `./scripts/copy-to-wow.ps1` in PowerShell to copy the addon to installed WoW clients. Pass `-WowRoot "D:\World of Warcraft"` if automatic discovery misses your installation. Use `-WhatIf` to preview destinations.
 
-The included Ace3 configuration libraries and bar textures are copied with the addon. The Ace3 libraries come from [WoWUIDev/Ace3](https://github.com/WoWUIDev/Ace3) at commit `a3604956e6e98a2b41144e7dbffadb21b917f828`; their license is in `Libs/LICENSE-Ace3.txt`. To rebuild the bar textures, run `python scripts/build-media.py`.
+The included Ace3 configuration libraries, bar textures, and addon icon are copied with the addon. The Ace3 libraries come from [WoWUIDev/Ace3](https://github.com/WoWUIDev/Ace3) at commit `a3604956e6e98a2b41144e7dbffadb21b917f828`; their license is in `Libs/LICENSE-Ace3.txt`. To rebuild the bar textures and icon, run `python scripts/build-media.py`.
 
 ## Development
 

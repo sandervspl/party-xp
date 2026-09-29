@@ -1,4 +1,5 @@
 ## Interface: 120100, 50504, 38002, 20506, 11509, 16001
+## IconTexture: Interface\AddOns\PartyXP\Media\icon
 ## Title: Party XP
 ## Notes: Small XP bars beside Blizzard party frames for party members using Party XP.
 ## Author: Sander
