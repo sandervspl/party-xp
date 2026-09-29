@@ -8,7 +8,7 @@ The addon supports Blizzard's standard and raid-style party frames. It does not 
 
 ## Settings
 
-Open Escape -> Options -> AddOns -> Party XP, or type `/partyxp` or `/pxp` to open the same settings panel. You can change bar width, height, position, offsets, opacity, and color. The Appearance section also offers Classic, Flat, Gloss, and Striped fills; optional Thin, Bold, or Gold borders; and rounded edges. `/partyxp on` and `/partyxp off` toggle the bars. Settings are saved between sessions.
+Open Escape -> Options -> AddOns -> Party XP, or type `/partyxp` or `/pxp` to open the same settings panel. You can change bar width, height, position, offsets, opacity, and color. The Appearance section also offers Classic, Flat, Gloss, and Striped fills; optional Thin, Bold, or Gold borders; and rounded edges. The XP text section can show each member's exact current / max XP at one of nine points on the bar, with separate horizontal and vertical offsets. XP text is off by default. `/partyxp on` and `/partyxp off` toggle the bars. Settings are saved between sessions.
 
 ## Local installation
 

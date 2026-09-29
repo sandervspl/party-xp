@@ -9,6 +9,10 @@ local function SetSetting(info, value)
     addon:RefreshBars()
 end
 
+local function TextDisabled()
+    return not addon.db.showXPText
+end
+
 local function ResetDefaults()
     for key, value in pairs(addon.defaults) do
         if type(value) == "table" then
@@ -163,10 +167,63 @@ local options = {
                 },
             },
         },
+        xpText = {
+            type = "group",
+            name = "XP text",
+            inline = true,
+            order = 6,
+            args = {
+                showXPText = {
+                    type = "toggle",
+                    name = "Show current / max XP",
+                    order = 1,
+                    width = "full",
+                },
+                textPosition = {
+                    type = "select",
+                    name = "Text position",
+                    order = 2,
+                    width = "double",
+                    values = {
+                        CENTER = "Center of bar",
+                        LEFT = "Left of bar",
+                        RIGHT = "Right of bar",
+                        TOP = "Top of bar",
+                        BOTTOM = "Bottom of bar",
+                        TOPLEFT = "Top left of bar",
+                        TOPRIGHT = "Top right of bar",
+                        BOTTOMLEFT = "Bottom left of bar",
+                        BOTTOMRIGHT = "Bottom right of bar",
+                    },
+                    sorting = {
+                        "TOPLEFT", "TOP", "TOPRIGHT",
+                        "LEFT", "CENTER", "RIGHT",
+                        "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT",
+                    },
+                    disabled = TextDisabled,
+                },
+                textOffsetX = {
+                    type = "range",
+                    name = "Text horizontal offset",
+                    order = 3,
+                    width = "double",
+                    min = -100, max = 100, step = 1,
+                    disabled = TextDisabled,
+                },
+                textOffsetY = {
+                    type = "range",
+                    name = "Text vertical offset",
+                    order = 4,
+                    width = "double",
+                    min = -100, max = 100, step = 1,
+                    disabled = TextDisabled,
+                },
+            },
+        },
         reset = {
             type = "execute",
             name = "Reset defaults",
-            order = 6,
+            order = 7,
             func = ResetDefaults,
         },
     },

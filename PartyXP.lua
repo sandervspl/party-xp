@@ -19,6 +19,17 @@ local BORDER_STYLES = {
     BOLD = { size = 2, r = 0, g = 0, b = 0, a = 1 },
     GOLD = { size = 2, r = 0.9, g = 0.7, b = 0.3, a = 1 },
 }
+local TEXT_ANCHORS = {
+    CENTER = { "CENTER", "CENTER" },
+    LEFT = { "LEFT", "LEFT" },
+    RIGHT = { "RIGHT", "RIGHT" },
+    TOP = { "TOP", "TOP" },
+    BOTTOM = { "BOTTOM", "BOTTOM" },
+    TOPLEFT = { "TOPLEFT", "TOPLEFT" },
+    TOPRIGHT = { "TOPRIGHT", "TOPRIGHT" },
+    BOTTOMLEFT = { "BOTTOMLEFT", "BOTTOMLEFT" },
+    BOTTOMRIGHT = { "BOTTOMRIGHT", "BOTTOMRIGHT" },
+}
 local MASK_TEXTURES = {
     [1] = MEDIA .. "Rounded-1.tga",
     [2] = MEDIA .. "Rounded-2.tga",
@@ -41,6 +52,10 @@ local defaults = {
     borderEnabled = false,
     borderStyle = "THIN",
     rounded = false,
+    showXPText = false,
+    textPosition = "CENTER",
+    textOffsetX = 0,
+    textOffsetY = 0,
 }
 
 local sides = { LEFT = true, RIGHT = true, TOP = true, BOTTOM = true }
@@ -82,6 +97,10 @@ local function LoadSettings()
     if type(db.borderEnabled) ~= "boolean" then db.borderEnabled = defaults.borderEnabled end
     if not BORDER_STYLES[db.borderStyle] then db.borderStyle = defaults.borderStyle end
     if type(db.rounded) ~= "boolean" then db.rounded = defaults.rounded end
+    if type(db.showXPText) ~= "boolean" then db.showXPText = defaults.showXPText end
+    if not TEXT_ANCHORS[db.textPosition] then db.textPosition = defaults.textPosition end
+    db.textOffsetX = Clamp(db.textOffsetX, -100, 100, defaults.textOffsetX)
+    db.textOffsetY = Clamp(db.textOffsetY, -100, 100, defaults.textOffsetY)
     addon.db = db
 end
 
@@ -194,6 +213,11 @@ local function CreateBar(index)
     bar.borderInset = 0
     bar.rounded = false
 
+    local xpText = fill:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    xpText:SetTextColor(1, 1, 1)
+    xpText:Hide()
+    bar.xpText = xpText
+
     local background = fill:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints(fill)
     background:SetColorTexture(0, 0, 0, 0.75)
@@ -280,6 +304,15 @@ local function PositionBar(bar, frame)
     bar.anchor, bar.side, bar.x, bar.y = frame, db.side, db.offsetX, db.offsetY
 end
 
+local function PositionText(bar, db)
+    if bar.textPosition == db.textPosition and bar.textX == db.textOffsetX
+        and bar.textY == db.textOffsetY then return end
+    local anchors = TEXT_ANCHORS[db.textPosition]
+    bar.xpText:ClearAllPoints()
+    bar.xpText:SetPoint(anchors[1], bar, anchors[2], db.textOffsetX, db.textOffsetY)
+    bar.textPosition, bar.textX, bar.textY = db.textPosition, db.textOffsetX, db.textOffsetY
+end
+
 function addon:RefreshBars()
     local db = self.db
     if not db then return end
@@ -303,6 +336,13 @@ function addon:RefreshBars()
                     bar.fill:SetStatusBarColor(db.color.r, db.color.g, db.color.b)
                     bar.fill:SetMinMaxValues(0, state.maxXP)
                     bar.fill:SetValue(state.xp)
+                    if db.showXPText then
+                        PositionText(bar, db)
+                        bar.xpText:SetText(state.xp .. " / " .. state.maxXP)
+                        bar.xpText:Show()
+                    else
+                        bar.xpText:Hide()
+                    end
                     visible = true
                 end
             end
