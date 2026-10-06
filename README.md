@@ -22,4 +22,4 @@ Run `busted --output=TAP` from this directory. The test drives addon loading, pa
 
 For an in-game check, run `./scripts/copy-to-wow.ps1`, log into two characters with the addon, group them, and open Escape -> Options -> AddOns -> Party XP. Check that `/partyxp` opens that same page and that settings update the bars. The receiving character should see the other character's XP bar after they group; test both Blizzard party-frame styles and a max-level character.
 
-The release workflow follows BuffTimers' BigWigs packager setup. A `v*` tag creates GitHub releases for Retail, Classic Era, Mists of Pandaria, and Forever. CurseForge or Wago publication can be added when this addon has project IDs and API tokens.
+The release workflow follows BuffTimers' BigWigs packager setup. A `v*` tag creates GitHub releases and uploads to CurseForge for Retail, Classic Era, Mists of Pandaria, and Forever. CurseForge publishing uses the project ID in `PartyXP.toc` and the repository's `CF_API_KEY` secret. Wago publication can be added when this addon has a Wago project ID and API token.
